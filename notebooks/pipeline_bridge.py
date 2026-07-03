@@ -173,3 +173,14 @@ def export_analytics_graphics(df_rfm):
     plt.tight_layout()
     plt.savefig(os.path.join(OUTPUTS_DIR, "rfm_value_clusters.png"), dpi=300)
     plt.close()
+
+# =====================================================================
+# SYSTEM EXECUTION CONTROLLER
+# =====================================================================
+if __name__ == "__main__":
+    df_cust, df_tx = generate_mock_data()
+    db_connection = build_relational_database(df_cust, df_tx)
+    rfm_segmented_df = execute_segmentation_pipeline(db_connection)
+    export_analytics_graphics(rfm_segmented_df)
+    db_connection.close()
+    print("🎉 Relational E-Commerce SQL-RFM Pipeline completed successfully!")
