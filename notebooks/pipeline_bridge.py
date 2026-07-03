@@ -139,3 +139,37 @@ def execute_segmentation_pipeline(conn):
     df_rfm.to_csv(os.path.join(PROJECT_ROOT, 'data', 'customer_rfm_segments.csv'), index=False)
     return df_rfm
 
+# =====================================================================
+# STEP 4: PRESENTATION VISUAL GRAPHICS
+# =====================================================================
+def export_analytics_graphics(df_rfm):
+    """Generates high-resolution production charts visualizing customer segment values."""
+    print("⏳ Rendering customer segments graphics panels...")
+    sns.set_theme(style="whitegrid")
+    
+    # --- Chart 1: Visualizing Volume Distribution of Customer Cohorts ---
+    plt.figure(figsize=(10, 6))
+    order = df_rfm['Customer_Segment'].value_counts().index
+    sns.countplot(data=df_rfm, y='Customer_Segment', order=order, palette='viridis')
+    plt.title('Enterprise Distribution Portfolio Across Strategic Customer Segments', fontweight='bold', fontsize=14)
+    plt.xlabel('Customer Account Volumes')
+    plt.ylabel('Strategic Segment Categorization')
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUTS_DIR, "customer_segment_distribution.png"), dpi=300)
+    plt.close()
+
+    # --- Chart 2: Scatter Plot of Recency vs. Monetary Metrics ---
+    plt.figure(figsize=(12, 7))
+    sns.scatterplot(
+        data=df_rfm, x='Recency', y='Monetary', 
+        hue='Customer_Segment', size='Frequency', 
+        sizes=(20, 200), palette='Set1', alpha=0.8
+    )
+    plt.title('RFM Clustering Analysis: Recency Value vs Cumulative Monetary Values', fontweight='bold', fontsize=14)
+    plt.xlabel('Recency Scale Interval (Days Since Last Order)')
+    plt.ylabel('Lifetime Gross Monetary Contributions (USD)')
+    plt.yscale('log') # Log scale accommodates outlier spending distributions smoothly
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', title='Customer Cohorts')
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUTS_DIR, "rfm_value_clusters.png"), dpi=300)
+    plt.close()
