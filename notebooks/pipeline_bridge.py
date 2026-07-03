@@ -50,3 +50,46 @@ def generate_mock_data():
     
     return df_customers, df_transactions
 
+# =====================================================================
+# STEP 2: BUILD RELATIONAL DATABASE ENGINE
+# =====================================================================
+def build_relational_database(df_cust, df_tx):
+    """Establishes an active SQL connection and writes normalized database schemas."""
+    print(f"📦 Connecting to local database stream at: {DB_PATH}")
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Create Tables explicitly enforcing Primary, Foreign Keys and Referential Integrity
+    cursor.execute("DROP TABLE IF EXISTS transactions;")
+    cursor.execute("DROP TABLE IF EXISTS customers;")
+    
+    cursor.execute("""
+        CREATE TABLE customers (
+            CustomerID TEXT PRIMARY KEY,
+            JoinDate TEXT,
+            Country TEXT
+        );
+    """)
+    
+    cursor.execute("""
+        CREATE TABLE transactions (
+            TransactionID TEXT PRIMARY KEY,
+            CustomerID TEXT,
+            TransactionDate TEXT,
+            OrderValue REAL,
+            FOREIGN KEY (CustomerID) REFERENCES customers(CustomerID)
+        );
+    """)
+    
+    # Cast timestamp vectors to strings for standard SQLite compatibility
+    df_cust['JoinDate'] = df_cust['JoinDate'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    df_tx['TransactionDate'] = df_tx['TransactionDate'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Write dataframe buffers into clean relational database tables
+    df_cust.to_sql('customers', conn, if_exists='append', index=False)
+    df_tx.to_sql('transactions', conn, if_exists='append', index=False)
+    
+    conn.commit()
+    print("✅ Database tables created, constraints compiled, and transactions indexed.")
+    return conn
+
