@@ -93,3 +93,49 @@ def build_relational_database(df_cust, df_tx):
     print("✅ Database tables created, constraints compiled, and transactions indexed.")
     return conn
 
+# =====================================================================
+# STEP 3: EXECUTE RFM STATISTICAL CUSTOMER SEGMENTATION
+# =====================================================================
+def execute_segmentation_pipeline(conn):
+    """Executes a multi-join SQL query to perform RFM scoring and profiling."""
+    print("🧮 Injecting raw pipeline SQL instructions to compute RFM distributions...")
+    
+    # Set the current baseline snapshot evaluation target date
+    SNAPSHOT_DATE = "2026-07-01 00:00:00"
+    
+    sql_query = f"""
+    WITH RFM_Raw AS (
+        SELECT 
+            c.CustomerID,
+            c.Country,
+            ROUND(JULIANDAY('{SNAPSHOT_DATE}') - JULIANDAY(MAX(t.TransactionDate))) AS Recency,
+            COUNT(t.TransactionID) AS Frequency,
+            SUM(t.OrderValue) AS Monetary
+        FROM customers c
+        JOIN transactions t ON c.CustomerID = t.CustomerID
+        GROUP BY c.CustomerID
+    ),
+    RFM_Scores AS (
+        SELECT *,
+            NTILE(5) OVER (ORDER BY Recency DESC) AS R_Score,
+            NTILE(5) OVER (ORDER BY Frequency ASC) AS F_Score,
+            NTILE(5) OVER (ORDER BY Monetary ASC) AS M_Score
+        FROM RFM_Raw
+    )
+    SELECT *,
+        (R_Score + F_Score + M_Score) AS Total_RFM_Value,
+        CASE 
+            WHEN R_Score >= 4 AND F_Score >= 4 AND M_Score >= 4 THEN 'Core VIP'
+            WHEN R_Score <= 2 AND F_Score >= 3 THEN 'At Churn Risk'
+            WHEN R_Score >= 4 AND F_Score <= 2 THEN 'New Leads'
+            ELSE 'Regular Accounts'
+        END AS Customer_Segment
+    FROM RFM_Scores;
+    """
+    
+    df_rfm = pd.read_sql_query(sql_query, conn)
+    
+    # Export calculated data matrix sheet
+    df_rfm.to_csv(os.path.join(PROJECT_ROOT, 'data', 'customer_rfm_segments.csv'), index=False)
+    return df_rfm
+
