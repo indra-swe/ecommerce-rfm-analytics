@@ -11,3 +11,11 @@ WITH RFM_Raw AS (
     JOIN transactions t ON c.CustomerID = t.CustomerID
     GROUP BY c.CustomerID
 ),
+-- STEP 2: Apply SQL Window functions to segment metrics into equal performance quintiles
+RFM_Scores AS (
+    SELECT *,
+        NTILE(5) OVER (ORDER BY Recency DESC) AS R_Score,  -- Low recency numbers indicate highly active accounts
+        NTILE(5) OVER (ORDER BY Frequency ASC) AS F_Score, -- High counts equal top loyalty tier
+        NTILE(5) OVER (ORDER BY Monetary ASC) AS M_Score   -- High revenue equals premium tier
+    FROM RFM_Raw
+)
