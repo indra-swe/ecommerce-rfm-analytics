@@ -103,7 +103,7 @@ ddef execute_segmentation_pipeline(conn):
     # Set the current baseline snapshot evaluation target date
     SNAPSHOT_DATE = "2026-07-01 00:00:00"
     
-    sql_query = f"""
+sql_query = f"""
     WITH RFM_Raw AS (
         SELECT 
             c.CustomerID,
@@ -133,12 +133,17 @@ ddef execute_segmentation_pipeline(conn):
     FROM RFM_Scores;
     """
     
-    df_rfm = pd.read_sql_query(sql_query, conn)
+df_rfm = pd.read_sql_query(sql_query, conn)
+    
+    # --- THE FIXED LINE: Ensure the data directory exists before writing ---
+    TARGET_DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
+    os.makedirs(TARGET_DATA_DIR, exist_ok=True)
     
     # Export calculated data matrix sheet
-    df_rfm.to_csv(os.path.join(PROJECT_ROOT, 'data', 'customer_rfm_segments.csv'), index=False)
+    output_csv_path = os.path.join(TARGET_DATA_DIR, 'customer_rfm_segments.csv')
+    df_rfm.to_csv(output_csv_path, index=False)
+    print(f"✅ Segmented customer metrics sheet exported safely to: {output_csv_path}")
     return df_rfm
-
 # =====================================================================
 # STEP 4: PRESENTATION VISUAL GRAPHICS
 # =====================================================================
