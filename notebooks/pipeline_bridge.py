@@ -96,7 +96,7 @@ def build_relational_database(df_cust, df_tx):
 # =====================================================================
 # STEP 3: EXECUTE RFM STATISTICAL CUSTOMER SEGMENTATION
 # =====================================================================
-def execute_segmentation_pipeline(conn):
+ddef execute_segmentation_pipeline(conn):
     """Executes a multi-join SQL query to perform RFM scoring and profiling."""
     print("🧮 Injecting raw pipeline SQL instructions to compute RFM distributions...")
     
