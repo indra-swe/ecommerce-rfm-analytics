@@ -15,8 +15,13 @@ PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 DB_PATH = os.path.join(PROJECT_ROOT, 'database', 'market_core.db')
 OUTPUTS_DIR = os.path.join(PROJECT_ROOT, 'outputs')
 
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-os.makedirs(OUTPUTS_DIR, exist_ok=True)
+# Wrap directory creation in a try-except block to handle Windows permission/existence locks safely
+try:
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    os.makedirs(OUTPUTS_DIR, exist_ok=True)
+except FileExistsError:
+    # If Windows throws an error because the directory already exists, catch it silently and proceed
+    pass
 
 # =====================================================================
 # STEP 1: GENERATE SYNTHETIC ENTERPRISE RELATIONAL DATA
